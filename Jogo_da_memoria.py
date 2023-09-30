@@ -3,96 +3,123 @@ import random
 pygame.init()
 
 # Defina as constantes
-WIDTH, HEIGHT = 800, 600
-CARD_WIDTH, CARD_HEIGHT = 100, 100
-GRID_SIZE = 4
-GRID_ROWS, GRID_COLS = GRID_SIZE, GRID_SIZE
+LARGURA, ALTURA = 800, 600
+LARGURA_CARTA, ALTURA_CARTA = 100, 100
+TAMANHO_GRADE = 4
+LINHAS_GRADE, COLUNAS_GRADE = TAMANHO_GRADE, TAMANHO_GRADE
 FPS = 60
 
-# Cores
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-
 # Crie a tela
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+tela = pygame.display.set_mode((LARGURA, ALTURA))
 pygame.display.set_caption("Jogo da Memória")
 
-# Defina a fonte
-font = pygame.font.Font(None, 36)
-
 # Relógio para controlar a taxa de quadros
-clock = pygame.time.Clock()
-
-# Função para desenhar um card na tela
-def draw_card(x, y, card_value, face_up):
-    card_color = WHITE if face_up else BLACK
-    pygame.draw.rect(screen, card_color, (x, y, CARD_WIDTH, CARD_HEIGHT))
-    if face_up:
-        text_surface = font.render(str(card_value), True, BLACK)
-        screen.blit(text_surface, (x + 30, y + 30))
+relogio = pygame.time.Clock()
 
 # Crie uma matriz para representar as cartas no jogo
-grid = [[0] * GRID_COLS for _ in range(GRID_ROWS)]
+grade = [[0] * COLUNAS_GRADE for _ in range(LINHAS_GRADE)]
 
-# Crie uma lista de valores de cartas em pares
-card_values = list(range(1, GRID_ROWS * GRID_COLS // 2 + 1)) * 2
-random.shuffle(card_values)
+# Crie um dicionário que mapeia os valores das cartas para as imagens
+imagens_cartas = {}
+for valor in range(1, LINHAS_GRADE * COLUNAS_GRADE // 2 + 1):
+    if valor <= LINHAS_GRADE * COLUNAS_GRADE // 4:
+        imagem = pygame.image.load("C:/Users/Eu/Downloads/uva-feat-img.jpg")  # Substitua pelo nome da imagem de uva
+    else:
+        imagem = pygame.image.load(f"C:/Users/Eu/Downloads/banana-prata1-1de4a86361951570af15122893837003-1024-1024.jpg")  # Substitua pelo nome da imagem de banana
 
-# Preencha a matriz de cartas com valores aleatórios
-for row in range(GRID_ROWS):
-    for col in range(GRID_COLS):
-        value = card_values.pop()
-        grid[row][col] = value
+    imagem = pygame.transform.scale(imagem, (LARGURA_CARTA, ALTURA_CARTA))
+    imagens_cartas[valor] = imagem
+
+# Embaralhe as imagens das cartas
+imagens_embaralhadas = list(imagens_cartas.values()) * 2
+random.shuffle(imagens_embaralhadas)
+
+# Preencha a matriz de cartas com imagens aleatórias
+for linha in range(LINHAS_GRADE):
+    for coluna in range(COLUNAS_GRADE):
+        imagem = imagens_embaralhadas.pop()
+        grade[linha][coluna] = imagem
 
 # Outras variáveis de controle do jogo
-selected_card = None
-first_selection = True
-matched_pairs = 0
+cartas_viradas = []  # Armazena as cartas viradas
+pares_correspondentes = 0
+pode_virar_cartas = True  # Variável para controlar se o jogador pode virar cartas
+
+# Armazene a primeira carta virada
+primeira_carta_virada = None
 
 # Loop principal do jogo
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+executando = True
+while executando:
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:
+            executando = False
 
-    screen.fill(WHITE)
+    tela.fill((0, 0, 0))
 
     # Lógica do jogo
-    for row in range(GRID_ROWS):
-        for col in range(GRID_COLS):
-            x = col * CARD_WIDTH
-            y = row * CARD_HEIGHT
+    for linha in range(LINHAS_GRADE):
+        for coluna in range(COLUNAS_GRADE):
+            x = coluna * LARGURA_CARTA
+            y = linha * ALTURA_CARTA
 
-            card = grid[row][col]
+            carta = grade[linha][coluna]
 
-            if card == 0:
+            if carta == 0:
                 continue
 
-            # Verifica se o mouse está sobre a carta
+            # Verifica se o mouse está sobre a carta e se o jogador pode virá-la
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            if x < mouse_x < x + CARD_WIDTH and y < mouse_y < y + CARD_HEIGHT:
-                if pygame.mouse.get_pressed()[0] and selected_card is None:
-                    selected_card = (row, col)
-                elif pygame.mouse.get_pressed()[0] and selected_card is not None:
-                    if grid[row][col] == grid[selected_card[0]][selected_card[1]]:
-                        grid[row][col] = 0
-                        grid[selected_card[0]][selected_card[1]] = 0
-                        matched_pairs += 1
-                    selected_card = None
-                elif pygame.mouse.get_pressed()[2]:
-                    selected_card = None
+            if (x < mouse_x < x + LARGURA_CARTA and y < mouse_y < y + ALTURA_CARTA) and pode_virar_cartas:
+                if pygame.mouse.get_pressed()[0] and len(cartas_viradas) < 2:
+                    cartas_viradas.append((linha, coluna))
+                    if len(cartas_viradas) == 1:
+                        primeira_carta_virada = carta
 
             # Desenha a carta
-            face_up = grid[row][col] == 0 or (row, col) == selected_card
-            draw_card(x, y, card, face_up)
+            if (linha, coluna) in cartas_viradas:
+                tela.blit(carta, (x, y))
+            else:
+                # Desenha o verso da carta (substitua pela imagem do verso)
+                verso_carta = pygame.image.load(f"C:/Users/Eu/Downloads/23163977-branco-suave-sem-falhas-abstrato-fundo-limpar-limpo-simples-e-elegante-movimento-grafico-foto.jpg")  # Substitua pelo verso real
+                tela.blit(verso_carta, (x, y))
+
+    # Verifica se duas cartas foram viradas
+    if len(cartas_viradas) == 2:
+        linha1, coluna1 = cartas_viradas[0]
+        linha2, coluna2 = cartas_viradas[1]
+
+        carta1 = grade[linha1][coluna1]
+        carta2 = grade[linha2][coluna2]
+
+        if carta1 == carta2:
+            # Formou um par, as cartas são removidas
+            grade[linha1][coluna1] = 0
+            grade[linha2][coluna2] = 0
+            pares_correspondentes += 1
+
+        # Aguarde um momento para mostrar as cartas antes de virá-las de volta
+        pygame.time.delay(1000)
+        cartas_viradas = []
+
+        # Verifique se o jogador pode virar mais cartas
+        if pares_correspondentes < LINHAS_GRADE * COLUNAS_GRADE // 2:
+            pode_virar_cartas = True
+        else:
+            pode_virar_cartas = False
+
+    # Mantenha a primeira carta virada aberta até que o jogador selecione a segunda carta
+    if len(cartas_viradas) == 1:
+        linha, coluna = cartas_viradas[0]
+        grade[linha][coluna] = primeira_carta_virada
 
     # Verifica se o jogo terminou
-    if matched_pairs == GRID_ROWS * GRID_COLS // 2:
-        game_over_text = font.render("Parabéns! Você ganhou!", True, BLACK)
-        screen.blit(game_over_text, (WIDTH // 2 - 200, HEIGHT // 2 - 50))
+    if pares_correspondentes == LINHAS_GRADE * COLUNAS_GRADE // 2:
+        tela.fill((255, 255, 255))
+        texto_fim_de_jogo = pygame.font.Font(None, 48).render("Parabéns! Você ganhou!", True, (0, 0, 0))
+        tela.blit(texto_fim_de_jogo, (LARGURA // 2 - 200, ALTURA // 2 - 50))
 
     pygame.display.flip()
-    clock.tick(FPS)
+    relogio.tick(FPS)
 
 pygame.quit()
