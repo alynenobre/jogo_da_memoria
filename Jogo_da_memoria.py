@@ -23,9 +23,9 @@ grade = [[0] * COLUNAS_GRADE for _ in range(LINHAS_GRADE)]
 imagens_cartas = {}
 for valor in range(1, LINHAS_GRADE * COLUNAS_GRADE // 2 + 1):
     if valor <= LINHAS_GRADE * COLUNAS_GRADE // 4:
-        imagem = pygame.image.load("C:/Users/Eu/Downloads/uva-feat-img.jpg")  # Substitua pelo nome da imagem de uva
+        imagem = pygame.image.load("./assets/uva.jpg")  # Substitua pelo nome da imagem de uva
     else:
-        imagem = pygame.image.load(f"C:/Users/Eu/Downloads/banana-prata1-1de4a86361951570af15122893837003-1024-1024.jpg")  # Substitua pelo nome da imagem de banana
+        imagem = pygame.image.load(f"./assets/banana.jpg")  # Substitua pelo nome da imagem de banana
 
     imagem = pygame.transform.scale(imagem, (LARGURA_CARTA, ALTURA_CARTA))
     imagens_cartas[valor] = imagem
