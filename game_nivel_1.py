@@ -21,23 +21,26 @@ CINZA = (200, 200, 200)
 tempo_inicial = time.time()
 tempo_limite = 60
 
-cartas = [1, 2, 3, 4, 5, 6, 7, 8] * 2
+cartas = [1, 2] * 2
 random.shuffle(cartas)
 cartas_correspondentes = []
 
 verso_carta = pygame.image.load("./assets/imgs/verso_carta.jpg")
 verso_carta = pygame.transform.scale(verso_carta, (100, 100))
-frente_cartas = [pygame.image.load(f"./assets/imgs/frente_carta_{i}.jpg") for i in range(1, 9)]
+for i in range(1, 5):
+    print(f"./assets/imgs/frente_carta_{i}.jpg")
+frente_cartas = [pygame.image.load(f"./assets/imgs/frente_carta_{i}.jpg") for i in range(1, 3)]
 frente_cartas = [pygame.transform.scale(img, (100, 100)) for img in frente_cartas]
 
-posicoes_cartas = [(x, y) for x in range(4) for y in range(4)]
+posicoes_cartas = [(x, y) for x in range(2) for y in range(2)]
 random.shuffle(posicoes_cartas)
 
 fonte = pygame.font.Font(None, 36)
 
 def mostrar_mensagem_vitoria():
     tela.fill((255, 255, 255))
-    texto = fonte.render("Parabéns, você ganhou!", True, (0, 0, 255))
+    tempo_restante = tempo_limite - int(time.time() - tempo_inicial)
+    texto = fonte.render(f"Parabéns, você ganhou! \n Tempo: {tempo_restante}", True, (0, 0, 255))
     tela.blit(texto, (200, 250))
     pygame.display.flip()
     pygame.time.wait(2000)
@@ -51,17 +54,6 @@ def mostrar_mensagem_derrota():
     pygame.time.wait(2000)
     pygame.quit()
 
-# Função para enviar dados ao servidor
-def enviar_estado_jogo(client_socket, pontos, cartas_viradas, cartas_correspondentes):
-    dados = {"pontos": pontos, "cartas_viradas": cartas_viradas, "cartas_correspondentes": cartas_correspondentes}
-    serialized_data = pickle.dumps(dados)
-    client_socket.send(serialized_data)
-
-# Função para receber dados do servidor
-def receber_estado_jogo(client_socket):
-    serialized_data = client_socket.recv(1024)
-    dados = pickle.loads(serialized_data)
-    return dados
 
 def main(client_socket, nome_cliente):
 
@@ -70,6 +62,7 @@ def main(client_socket, nome_cliente):
     virando_carta = False
     tempo_final = 0
     tempo_viragem = 0
+    
 
     executando = True
     while executando:
@@ -100,11 +93,8 @@ def main(client_socket, nome_cliente):
                 pontos += 1
                 cartas_correspondentes.extend(cartas_viradas)
                 cartas_viradas = []
-                #enviar_estado_jogo(client_socket, pontos, cartas_viradas, cartas_correspondentes)
             else:
                 virando_carta = True
-                #enviar_estado_jogo(client_socket, pontos, cartas_viradas, cartas_correspondentes)
-
 
         texto_pontos = fonte.render("Pontos: " + str(pontos), True, AZUL)
         tela.blit(texto_pontos, (200, 500))
@@ -116,30 +106,27 @@ def main(client_socket, nome_cliente):
                 virando_carta = False
                 tempo_viragem = 0
 
-        for i in range(16):
+        for i in range(4):
             if i not in cartas_viradas and i not in cartas_correspondentes:
                 x, y = posicoes_cartas[i]
                 tela.blit(verso_carta, (50 + 100 * x, 50 + 100 * y))
 
-        # Verifica se o jogador venceu
-        if pontos == len(cartas) / 2:
+        if pontos == len(cartas)/2:
             tempo_final = time.time()
             mostrar_mensagem_vitoria()
-            #enviar_estado_jogo(client_socket,  pontos, cartas_viradas, cartas_correspondentes)
-            executando = False
+            executando=False
 
         if tempo_limite - int(time.time() - tempo_inicial) <= 0:
             mostrar_mensagem_derrota()
             executando=False
-
         elif executando:
             tempo_restante = tempo_limite - int(time.time() - tempo_inicial)
             texto_tempo = fonte.render("Tempo: " + str(tempo_restante), True, PRETO)
             tela.blit(texto_tempo, (20, 500))
             pygame.display.flip()
 
-        pygame.display.flip()
-
     pygame.display.quit()
     pygame.quit()
 
+if __name__ == "__main__":
+    main()
